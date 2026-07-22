@@ -6,9 +6,9 @@
 # the build the vLLM team blessed as working for this model family.
 #
 # NOTE: `:latest` does NOT include Gemma 4 support — you must use a gemma4 tag.
-# Pinned to a specific, reproducible build for H100 (x86_64 + CUDA 13.0) so the
-# image doesn't drift between builds. The moving `:gemma4` tag also works.
-FROM vllm/vllm-openai:gemma4-0505-x86_64-cu130
+# Using the plain moving `:gemma4` tag (multi-arch, most broadly pullable). If a
+# build ever needs pinning, swap to e.g. `gemma4-0505-x86_64-cu130`.
+FROM vllm/vllm-openai:gemma4
 
 # The base image's ENTRYPOINT launches the OpenAI server directly. We clear it so
 # our RunPod serverless handler is the process RunPod invokes instead.
