@@ -93,6 +93,5 @@ async def handler(job):
 
 # `return_aggregate_stream=True` also exposes the concatenated result to callers
 # that use /runsync instead of the streaming /run endpoint.
-runpod.serverless.start(
-    {"handler": handler, "return_aggregate_stream": True}
-)
+# NOTE: kept on a single line so RunPod's static handler scanner detects it.
+runpod.serverless.start({"handler": handler, "return_aggregate_stream": True})
