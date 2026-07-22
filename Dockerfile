@@ -1,4 +1,5 @@
 # Serverless vLLM worker for google/gemma-4-26B-A4B-it on RunPod.
+# Base image tag verified present on Docker Hub: vllm/vllm-openai:gemma4 (HTTP 200).
 #
 # We base on vLLM's OFFICIAL Gemma-4-capable image (`vllm/vllm-openai:gemma4`).
 # This is the critical choice: the stock RunPod `worker-vllm` image ships an
