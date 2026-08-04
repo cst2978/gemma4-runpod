@@ -1,0 +1,54 @@
+name: build-sglang-pod
+
+# Builds the interactive Gemma-4 SGLang POD image and pushes it to GHCR at:
+#   ghcr.io/cst2978/gemma4-sglang-pod:sglang-0803
+#   ghcr.io/cst2978/gemma4-sglang-pod:latest
+# Uses the built-in GITHUB_TOKEN (pushes to the repo owner's GHCR namespace).
+on:
+  push:
+    paths:
+      - "sglang-pod/**"
+      - ".github/workflows/build-sglang-pod.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      # The SGLang base image is ~18GB; reclaim runner disk first.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+          android: true
+          dotnet: true
+          haskell: true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./sglang-pod
+          push: true
+          tags: |
+            ghcr.io/cst2978/gemma4-sglang-pod:sglang-0803
+            ghcr.io/cst2978/gemma4-sglang-pod:latest
+          provenance: false
