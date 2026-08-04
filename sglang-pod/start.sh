@@ -40,7 +40,7 @@ mkdir -p "${HF_HOME:-/workspace/hf}"
 set +e
 while true; do
     echo "[start.sh] launching SGLang: model=$MODEL_PATH served-as=$SERVED_MODEL_NAME port=$PORT"
-    /opt/sglang-venv/bin/python -m sglang.launch_server \
+    python3 -m sglang.launch_server \
         --model-path "$MODEL_PATH" \
         --served-model-name "$SERVED_MODEL_NAME" \
         $PARSER_ARGS \
