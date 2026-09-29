@@ -1,7 +1,7 @@
 name: build-openjev-pod
 
 # Builds the SemIf (open-Jev) decision-server POD image and pushes it to GHCR at:
-#   ghcr.io/cst2978/openjev-pod:semif-23cf1f3   (SemIf commit baked in; bump with SEMIF_REF)
+#   ghcr.io/cst2978/openjev-pod:semif-master   (SemIf @master at build time)
 #   ghcr.io/cst2978/openjev-pod:latest
 # Uses the built-in GITHUB_TOKEN (pushes to the repo owner's GHCR namespace).
 on:
@@ -46,6 +46,6 @@ jobs:
           context: ./openjev-pod
           push: true
           tags: |
-            ghcr.io/cst2978/openjev-pod:semif-23cf1f3
+            ghcr.io/cst2978/openjev-pod:semif-master
             ghcr.io/cst2978/openjev-pod:latest
           provenance: false

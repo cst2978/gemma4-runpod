@@ -5,13 +5,8 @@
 # ~8.1 GB bf16) is NOT baked in — it downloads to HF_HOME on the network volume
 # on first start and is reused after that.
 #
-# We own this image, so instead of the --no-deps workaround (for images that
-# already ship torch) we install SemIf with its own exact pins, torch==2.10.0 included.
+# Install steps follow semif_openjev_deploy_spec.md ("Install").
 FROM python:3.12-slim
-
-# SemIf commit to install. The default branch is `master` (`main` 404s); pinned
-# to a SHA so rebuilds are reproducible. Bump deliberately.
-ARG SEMIF_REF=23cf1f39fc9534fe81437200959b6dfc7106e45a
 
 # sshd for interactive access; git for the pip git+ install; gcc because Triton
 # (used by flash-linear-attention) compiles small launcher stubs at runtime.
@@ -19,16 +14,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         openssh-server git gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/* && mkdir -p /run/sshd
 
-# torch first, from the CUDA 12.8 index, so SemIf's torch==2.10.0 pin is already
-# satisfied by a CUDA build (the wheel bundles the CUDA runtime; host needs only the driver).
+# The spec's --no-deps install assumes the image already ships torch. This base
+# has none, so first take SemIf's pinned torch==2.10.0 (CUDA 12.8 build; the
+# wheel bundles the CUDA runtime, the host only needs the driver).
 RUN pip install --no-cache-dir torch==2.10.0 --index-url https://download.pytorch.org/whl/cu128
 
-# SemIf with its pinned deps (transformers==5.17.0 is required for native
-# Qwen3_5ForCausalLM); flash-linear-attention is required by Qwen3.5 itself.
-RUN pip install --no-cache-dir \
-        "semif-phase1 @ git+https://github.com/TheoLeeCJ/SemIf-OpenJev@${SEMIF_REF}" \
-        flash-linear-attention==0.5.2 \
-        fastapi==0.123.10 "uvicorn==0.38.0"
+# --- spec "Install", verbatim ---
+# transformers==5.17.0 is not optional (native Qwen3_5ForCausalLM);
+# flash-linear-attention==0.5.2 is required by Qwen3.5 itself.
+RUN pip install -q transformers==5.17.0 accelerate safetensors huggingface-hub \
+                tokenizers sentencepiece protobuf flash-linear-attention==0.5.2
+# Branch is master, not main (main 404s).
+RUN pip install -q --no-deps git+https://github.com/TheoLeeCJ/SemIf-OpenJev@master
+
+# HTTP server for server.py.
+RUN pip install --no-cache-dir fastapi==0.123.10 uvicorn==0.38.0
 
 # Fail the build (not the pod) if transformers can't load Qwen3.5 natively.
 RUN python -c "import transformers, semif_phase1.shared; \

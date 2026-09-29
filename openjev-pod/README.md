@@ -6,7 +6,7 @@ HTTP wrapper around [SemIf-OpenJev](https://github.com/TheoLeeCJ/SemIf-OpenJev):
 
 | File | What it does |
 |---|---|
-| `Dockerfile` | python 3.12 + torch 2.10.0 (CUDA 12.8) + SemIf pinned to commit `23cf1f3` |
+| `Dockerfile` | python 3.12 + torch 2.10.0 (CUDA 12.8) + SemIf `@master`, installed per the deploy spec |
 | `server.py` | FastAPI: `GET /health`, `POST /score`; loads the model once at startup |
 | `start.sh` | sshd + supervised uvicorn on :8000 |
 | `pod.yaml` | pod config for `ti/create_pod.py` |
@@ -51,7 +51,7 @@ options in the order sent.
 `API_KEY` (optional bearer token; unset = open, the default here), `MAX_TOKENS`, `SHARED_BATCH`, `MAX_ROWS_PER_REQUEST` (512),
 `MODEL_ID` / `MODEL_REVISION` (must be a 40-char SHA for remote models).
 
-## Notes on the spec vs the code (SemIf `23cf1f3`)
+## Notes on the spec vs the code (SemIf `master` @ 23cf1f3, 2026-09-29)
 
 - `score_shared` returns `(results, timing)`, not a plain list.
 - Over-length prompts raise `ValueError` ("no truncation allowed"); they don't truncate silently.

@@ -7,7 +7,7 @@
 # No API key: the :8000 endpoint is open to anyone with the pod URL.
 
 name: chandra_openjev_pod
-image: ghcr.io/cst2978/openjev-pod:semif-23cf1f3
+image: ghcr.io/cst2978/openjev-pod:semif-master
 # Same GHCR credential as the gemma pod. If the pull 401s, make the package
 # public (GitHub → Packages → openjev-pod → visibility) and remove this line.
 container_registry_auth_id: cmrwjfqz6000zujjcq2ljbyy2
