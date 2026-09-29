@@ -1,0 +1,40 @@
+# Declarative RunPod pod config for the SemIf (open-Jev) decision server.
+# Create/manage with ti/create_pod.py:
+#     python ti/create_pod.py --config openjev-pod/pod.yaml
+#     python ti/create_pod.py --list
+#     python ti/create_pod.py --terminate <pod_id>
+#
+# No API key: the :8000 endpoint is open to anyone with the pod URL.
+
+name: chandra_openjev_pod
+image: ghcr.io/cst2978/openjev-pod:semif-23cf1f3
+# Same GHCR credential as the gemma pod. If the pull 401s, make the package
+# public (GitHub → Packages → openjev-pod → visibility) and remove this line.
+container_registry_auth_id: cmrwjfqz6000zujjcq2ljbyy2
+
+# Qwen3.5-4B bf16 uses ~9 GB VRAM, so one A100 is plenty. RunPod picks
+# whichever A100 variant has capacity.
+gpu_types:
+  - NVIDIA A100 80GB PCIe
+  - NVIDIA A100-SXM4-80GB
+cloud_types:
+  - COMMUNITY
+  - SECURE
+gpu_count: 1
+container_disk_gb: 30
+
+# Network volume keeps the 8.1 GB weights between pod starts (HF_HOME=/workspace/hf).
+# It is region-locked to US-NE-1, which limits the GPUs on offer — if nothing is
+# available, run create_pod.py with --no-volume (weights re-download each start).
+network_volume_id: axfl2g0pyz     # US-NE-1, shared with the gemma pod
+data_center: US-NE-1
+volume_mount_path: /workspace
+
+ports:
+  - 8000/http    # SemIf HTTP API
+  - 22/tcp       # SSH
+
+env:
+  MAX_TOKENS: "16384"
+  SHARED_BATCH: "32"
+  # PUBLIC_KEY is injected automatically from ~/.ssh/id_ed25519.pub by create_pod.py
