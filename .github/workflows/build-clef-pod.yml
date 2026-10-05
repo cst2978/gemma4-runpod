@@ -1,0 +1,49 @@
+name: build-clef-pod
+
+# Builds the Clef SystemOne POD image and pushes it to GHCR at:
+#   ghcr.io/cst2978/clef-pod:latest
+# Uses the built-in GITHUB_TOKEN (pushes to the repo owner's GHCR namespace).
+on:
+  push:
+    paths:
+      - "clef-pod/**"
+      - ".github/workflows/build-clef-pod.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      # torch + CUDA wheels make this a ~10 GB image; reclaim runner disk first.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./clef-pod
+          push: true
+          tags: |
+            ghcr.io/cst2978/clef-pod:latest
+          provenance: false
