@@ -23,7 +23,7 @@ Weights come from pinned Hugging Face revisions (set by `CLEF_VARIANT`):
 ## Deploy
 
 ```bash
-python ti/create_pod.py --config clef-pod/pod.yaml --no-volume
+python ti/create_pod.py --config clef-pod/pod.yaml --no-volume   # API key from clef_api_key in ti/.env
 POD_ID=<id> python clef-pod/smoke_test.py     # first start downloads the weights
 python ti/create_pod.py --stop <id>           # pause GPU billing, keep the disk
 ```
@@ -31,7 +31,7 @@ python ti/create_pod.py --stop <id>           # pause GPU billing, keep the disk
 ## API
 
 ```bash
-curl -s https://<pod>-8000.proxy.runpod.net/v1/systemone -H "Content-Type: application/json" -d '{
+curl -s https://<pod>-8000.proxy.runpod.net/v1/systemone -H "Authorization: Bearer $CLEF_API_KEY" -H "Content-Type: application/json" -d '{
   "model": "clef", "state": "…text…",
   "questions": {"threatened_cancel": {"type": "noul", "instructions": "The dealer says they will cancel."}}}'
 ```

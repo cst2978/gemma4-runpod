@@ -2,7 +2,8 @@
 #     python ti/create_pod.py --config clef-pod/pod.yaml --no-volume
 #     python ti/create_pod.py --stop <pod_id>   |  --start <pod_id>  |  --terminate <pod_id>
 #
-# No API key: the :8000 endpoint is open to anyone with the pod URL.
+# API_KEY comes from clef_api_key in ti/.env (create_pod.py fills ${CLEF_API_KEY});
+# every /v1/* call must send  Authorization: Bearer <key>.  /health stays open.
 
 name: chandra_clef_pod
 image: ghcr.io/cst2978/clef-pod:latest
@@ -28,6 +29,7 @@ ports:
   - 22/tcp       # SSH
 
 env:
+  API_KEY: ${CLEF_API_KEY}
   CLEF_VARIANT: flash
   MAX_LENGTH: "16384"
   MAX_BATCH_TOKENS: "32768"
