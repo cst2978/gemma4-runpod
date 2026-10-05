@@ -9,20 +9,21 @@ name: chandra_clef_pod
 image: ghcr.io/cst2978/clef-pod:latest
 container_registry_auth_id: cmrwjfqz6000zujjcq2ljbyy2
 
-# Clef-flash (9B, ~18 GB bf16) fits a 48 GB card with room for batching; the A100 80GB
-# is the fallback and also fits the full 27B Clef (set CLEF_VARIANT: full below).
+# Full Clef (27B, ~54 GB bf16) needs an 80 GB card. Tried strictly in this order:
+# A100 first (fits, cheaper); H100 only if no A100 is available.
+# (Clef-flash would fit 48 GB cards: set CLEF_VARIANT: flash and add L40S / A40 here.)
+gpu_priority: ordered
 gpu_types:
-  - NVIDIA L40S
-  - NVIDIA A40
-  - NVIDIA RTX 6000 Ada Generation
   - NVIDIA A100 80GB PCIe
   - NVIDIA A100-SXM4-80GB
+  - NVIDIA H100 80GB HBM3
+  - NVIDIA H100 PCIe
 cloud_types:
   - COMMUNITY
   - SECURE
 gpu_count: 1
-# image ~10 GB + Clef-flash weights 18 GB (no network volume); use 100 for CLEF_VARIANT: full
-container_disk_gb: 60
+# image ~10 GB + Clef weights ~54 GB (no network volume), with headroom
+container_disk_gb: 100
 
 ports:
   - 8000/http    # SystemOne API
@@ -30,7 +31,7 @@ ports:
 
 env:
   API_KEY: ${CLEF_API_KEY}
-  CLEF_VARIANT: flash
+  CLEF_VARIANT: full
   MAX_LENGTH: "16384"
-  MAX_BATCH_TOKENS: "32768"
+  MAX_BATCH_TOKENS: "16384"    # 27B leaves ~20 GB for activations on an 80 GB card
   # PUBLIC_KEY is injected automatically from ~/.ssh/id_ed25519.pub by create_pod.py

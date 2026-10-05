@@ -33,6 +33,11 @@ REPO, REVISION = VARIANTS[VARIANT]
 MAX_LENGTH = int(os.environ.get("MAX_LENGTH", "16384"))             # Clef's own default
 MAX_BATCH_TOKENS = int(os.environ.get("MAX_BATCH_TOKENS", "32768"))  # padded tokens per forward
 MAX_REQUESTS = int(os.environ.get("MAX_REQUESTS_PER_BATCH", "256"))
+# Right-pad every forward to a multiple of PAD_BUCKET tokens (0 = off). The GPU kernels compile
+# once per input shape (14-42 s each), so bucketing turns "one compile per episode length" into
+# "one compile per bucket". Clef already right-pads batches with attention_mask 0, and padding
+# after the last real token cannot change earlier positions, so answers are unaffected.
+PAD_BUCKET = int(os.environ.get("PAD_BUCKET", "256"))
 API_KEY = os.environ.get("API_KEY", "")
 
 log = logging.getLogger("clef")
@@ -129,6 +134,21 @@ def _answer(req, enc, logits, dropped, seconds):
                       "seconds": round(seconds, 4)}}
 
 
+def _bucket(inputs, pad):
+    """Right-pad input_ids / attention_mask up to the next multiple of PAD_BUCKET."""
+    if PAD_BUCKET <= 0 or inputs.get("media"):
+        return inputs
+    n = inputs["input_ids"].shape[1]
+    if n % PAD_BUCKET == 0:
+        return inputs
+    import torch.nn.functional as F
+
+    extra = PAD_BUCKET - n % PAD_BUCKET
+    return {**inputs,
+            "input_ids": F.pad(inputs["input_ids"], (0, extra), value=pad),
+            "attention_mask": F.pad(inputs["attention_mask"], (0, extra), value=0)}
+
+
 def _score(reqs):
     """Encode every request, run them in length-sorted GPU batches, return results in order."""
     import torch
@@ -154,7 +174,8 @@ def _score(reqs):
         t0 = time.time()
         try:
             with torch.inference_mode():
-                logits = model(jsm.collate_records([e for _, e, _ in batch], pad, device))
+                inputs = jsm.collate_records([e for _, e, _ in batch], pad, device)
+                logits = model(_bucket(inputs, pad))
             per = (time.time() - t0) / len(batch)
             for (i, enc, dropped), lg in zip(batch, logits):
                 out[i] = _answer(reqs[i], enc, lg, dropped, per)
